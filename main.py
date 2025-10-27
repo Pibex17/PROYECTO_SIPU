@@ -3,6 +3,7 @@ from DataBase import db
 from sqlalchemy import text
 from Periodos import Periodos
 from Carreras import Carreras
+from OfertasAcademicas import OfertasAcademicas
 
 def main():
     print("🎓 SISTEMA DE INSCRIPCIÓN UNIVERSITARIA")
@@ -31,7 +32,8 @@ def menu_principal():
         print("1. Ver tablas existentes")
         print("2. Gestionar períodos académicos")
         print("3. Gestionar carreras")
-        print("4. Salir")
+        print("4. Gestionar ofertas academicas")
+        print("5. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
@@ -40,8 +42,10 @@ def menu_principal():
         elif opcion == "2":
             menu_periodos()
         elif opcion == "3":
-            Carreras()
+            menu_carreras()
         elif opcion == "4":
+            menu_ofertasAcademicas()
+        elif opcion == "5":
             print("¡Hasta pronto! 👋")
             break
         else:
@@ -93,14 +97,69 @@ def ver_estructura():
             
     except Exception as e:
         print(f"❌ Error: {e}")
+def menu_ofertasAcademicas():
+    """Menu para gestionar ofertas academicas"""
+    while True:
+        print("\n" + "=" * 50)
+        print("MENÚ DE OPCIONES PARA LA GESTION DE OFERTAS ACADEMICAS")
+        print("=" * 50)
+        print("1. Crear tabla de ofertas academicas")
+        print("2. Crear Oferta Acedmica")
+        print("3. Ver Ofertas Academicas")
+        print("4. Modificar Oferta")
+        print("5. Eliminar Oferta")
+        print("6. Volver al menu principal")
+        opcion = input("\nSeleccione una opción: ")
+        
+        if opcion == "1":
+            OfertasAcademicas.crear_tablas_ofertas()
+        if opcion == "2":
+            nombre = input("Nombre de la oferta: ")
+            id_periodo = int(input("ID del periodo: "))
+            estado = input("Estado (Activa/Inactiva): ") or "Activa"
+            carreras_oferta = []
+            agregar_mas = "s"
+            while agregar_mas.lower() == "s":
+                id_carrera = int(input("ID Carrera a agregar: "))
+                jornada = input("Jornada: ")
+                modalidad = input("Modalidad: ")
+                tipo_cupo = input("Tipo de cupo: ")
+                total_cupos = int(input("Total de cupos: "))
+                
+                carreras_oferta.append({
+                    "idCarrera": id_carrera,
+                    "jornada": jornada,
+                    "modalidad": modalidad,
+                    "tipoCupo": tipo_cupo,
+                    "totalCupos": total_cupos
+                })
+                agregar_mas = input("¿Agregar otra carrera? (s/n): ")
+            OfertasAcademicas.crear_oferta(nombre, id_periodo, estado, carreras_oferta)
+        if opcion == "3":
+            periodo = input("Filtrar por ID de periodo (Enter para todos): ")
+            OfertasAcademicas.ver_ofertas(id_periodo=int(periodo) if periodo else None)
+        if opcion == "4":
+            id_oferta = int(input("Ingrese ID de la oferta a modificar: "))
+            nuevo_nombre = input("Nuevo nombre (Enter para omitir): ") or None
+            nuevo_periodo = input("Nuevo periodo (Enter para omitir): ")
+            nuevo_periodo = int(nuevo_periodo) if nuevo_periodo else None
+            nuevo_estado = input("Nuevo estado (Activa/Inactiva) (Enter para omitir): ") or None
 
+            OfertasAcademicas.modificar_oferta(id_oferta, nuevo_nombre, nuevo_periodo, nuevo_estado)
+        if opcion == "5":
+            id_oferta = int(input("Ingrese ID de la oferta a eliminar: "))
+            OfertasAcademicas.eliminar_oferta(id_oferta)
+        if opcion  == "6":
+            print("Volviendo al menu principal...")
+            break
+            
 def menu_carreras():
     """Menú para gestionar carreras"""
     carreras = Carreras()
     
     while True:
         print("\n" + "=" * 50)
-        print("MENÚ DE CARRERAS")
+        print("MENÚ DE OPCIONES PARA LA GESTION DE CARRERAS")
         print("=" * 50)
         print("1. Crear tabla de carreras")
         print("2. Insertar carrera")
