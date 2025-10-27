@@ -2,6 +2,7 @@
 from DataBase import db
 from sqlalchemy import text
 from Periodos import Periodos
+from Carreras import Carreras
 
 def main():
     print("🎓 SISTEMA DE INSCRIPCIÓN UNIVERSITARIA")
@@ -29,7 +30,8 @@ def menu_principal():
         print("=" * 50)
         print("1. Ver tablas existentes")
         print("2. Gestionar períodos académicos")
-        print("3. Salir")
+        print("3. Gestionar carreras")
+        print("4. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
@@ -38,6 +40,8 @@ def menu_principal():
         elif opcion == "2":
             menu_periodos()
         elif opcion == "3":
+            Carreras()
+        elif opcion == "4":
             print("¡Hasta pronto! 👋")
             break
         else:
@@ -90,6 +94,46 @@ def ver_estructura():
     except Exception as e:
         print(f"❌ Error: {e}")
 
+def menu_carreras():
+    """Menú para gestionar carreras"""
+    carreras = Carreras()
+    
+    while True:
+        print("\n" + "=" * 50)
+        print("MENÚ DE CARRERAS")
+        print("=" * 50)
+        print("1. Crear tabla de carreras")
+        print("2. Insertar carrera")
+        print("3. Ver lista de carreras")
+        print("4. Actualizar carrera")
+        print("5. Eliminar carrera")
+        print("6. Volver al menu principal")
+        
+        opcion = input("\nSeleccione una opción: ")
+        
+        if opcion == "1":
+            carreras.crear_tabla_carreras()
+        if opcion == "2":
+            nombre = input("Nombre del período: ")
+            descripcion = input("Descripcion de la carrera: ")
+            duracion = input("Cuantos semestres dura la carrera: ")
+            estado = input("Estado (Activo/Cerrado/Planeado): ")
+            carreras.insertar_carrera(nombre, descripcion, duracion, estado)
+        if opcion == "3":
+            carreras.ver_carreras()
+        if opcion == "4":
+            id_carrera = input("ID de la carrera a actualizar: ")
+            nuevo_nombre = input("Nuevo nombre para la carrera: ")
+            nueva_descripcion = input("Nueva descripcion para la carrera: ")
+            nueva_duracion = input("Nueva duracion para la carrera: ")
+            nuevo_estado = input("Nuevo estado de la carrera: ")
+            carreras.actualizar_carrera(id_carrera, nuevo_nombre, nueva_descripcion, nueva_duracion, nuevo_estado)
+        if opcion == "5":
+            id_carrera = input("ID de la carrera a eliminar: ")
+            carreras.eliminar_carrera()
+        if opcion == "6":
+            print("Volviendo al menu principal...")
+            break
 def menu_periodos():
     """Menú para gestionar períodos académicos"""
     periodos = Periodos()
