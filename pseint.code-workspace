@@ -1,0 +1,35 @@
+{
+	"folders": [
+		{
+			"name": "pseint",
+			"path": "../../../../../pseint"
+		},
+		{
+			"name": "Aramar web",
+			"path": "../../../Aramar web"
+		},
+		{
+			"name": "PROGRAMACION ESTRUCTURADA",
+			"path": "../../SEMESTRE 2/PROGRAMACION ESTRUCTURADA"
+		},
+		{
+			"name": "SEMESTRE 3",
+			"path": ".."
+		},
+		{
+			"name": "PRACTICA INDIVIDUAL",
+			"path": "D:/UNIVERSIDAD/SEMESTRE 2/PROGRAMACION ESTRUCTURADA/PRACTICA INDIVIDUAL"
+		},
+		{
+			"path": "../../../JA_WEB"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "JA_WEB"
+	},
+	"extensions": {
+		"recommendations": [
+			"ritwickdey.liveserver"
+		]
+	}
+}

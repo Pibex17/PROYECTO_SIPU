@@ -105,5 +105,3 @@ class Periodos:
                 print(f"✅ Período con ID '{id_periodo}' desactivado exitosamente.")
         except Exception as e:
             print(f"❌ ERROR al desactivar el período con ID '{id_periodo}': {str(e)}")
-
-

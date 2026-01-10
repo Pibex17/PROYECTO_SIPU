@@ -2,6 +2,7 @@
 from DataBase import db
 from sqlalchemy import text
 from Periodos import Periodos
+from Carreras import Carreras
 
 def main():
     print("🎓 SISTEMA DE INSCRIPCIÓN UNIVERSITARIA")
@@ -29,7 +30,8 @@ def menu_principal():
         print("=" * 50)
         print("1. Ver tablas existentes")
         print("2. Gestionar períodos académicos")
-        print("3. Salir")
+        print("3. Gestionar carreras")
+        print("4. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
@@ -38,6 +40,8 @@ def menu_principal():
         elif opcion == "2":
             menu_periodos()
         elif opcion == "3":
+            menu_carreras()
+        elif opcion == "4":
             print("¡Hasta pronto! 👋")
             break
         else:
@@ -119,6 +123,51 @@ def menu_periodos():
         if opcion == "4":
             id_periodo = input("ID del período a desactivar: ")
             periodos.desactivar_periodo(id_periodo)
+        if opcion == "5":
+            break
+
+def menu_carreras():
+    """Menú para gestionar carreras académicas"""
+    carreras = Carreras()
+    
+    while True:
+        print("\n" + "=" * 50)
+        print("MENÚ DE CARRERAS ACADÉMICAS")
+        print("=" * 50)
+        print("1. Crear tabla de carreras")
+        print("2. Insertar nueva carrera")
+        print("3. Ver carreras")
+        print("4. Actualizar carrera")
+        print("5. Eliminar carrera")
+        print("6. Volver al menú principal")
+        
+        opcion = input("\nSeleccione una opción: ")
+        
+        if opcion == "1":
+            carreras.crear_tabla_carreras()
+        elif opcion == "2":
+            nombre = input("Nombre de la carrera: ")
+            descripcion = input("Descripción: ")
+            duracion = int(input("Duración en semestres: "))
+            estado = input("Estado (Activa/Inactiva) [Activa]: ") or "Activa"
+            carreras.insertar_carrera(nombre, descripcion, duracion, estado)
+        elif opcion == "3":
+            carreras.ver_carreras()
+        elif opcion == "4":
+            id_carrera = int(input("ID de la carrera a actualizar: "))
+            nuevo_nombre = input("Nuevo nombre (dejar vacío para no cambiar): ") or None
+            nueva_descripcion = input("Nueva descripción (dejar vacío para no cambiar): ") or None
+            nueva_duracion_str = input("Nueva duración (dejar vacío para no cambiar): ")
+            nueva_duracion = int(nueva_duracion_str) if nueva_duracion_str else None
+            nuevo_estado = input("Nuevo estado (Activa/Inactiva, dejar vacío para no cambiar): ") or None
+            carreras.actualizar_carrera(id_carrera, nuevo_nombre, nueva_descripcion, nueva_duracion, nuevo_estado)
+        elif opcion == "5":
+            id_carrera = int(input("ID de la carrera a eliminar: "))
+            carreras.eliminar_carrera(id_carrera)
+        elif opcion == "6":
+            break
+        else:
+            print("❌ Opción inválida")
 
 if __name__ == "__main__":
     main()
