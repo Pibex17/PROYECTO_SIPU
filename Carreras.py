@@ -3,14 +3,6 @@ from DataBase import db
 from sqlalchemy import text
 
 class Carreras:
-    """Gestiona las carreras académicas del sistema"""
-    def __init__(self):
-        pass
-
-    from DataBase import db
-from sqlalchemy import text
-
-class Carreras:
     def __init__(self):
         pass
 
@@ -140,3 +132,28 @@ class Carreras:
                 print(f"Carrera con ID {id_carrera} eliminada correctamente.")
         except Exception as e:
             print(f"Error al eliminar la carrera {id_carrera}: {str(e)}")
+
+    def ver_carreras_para_inscripcion(self):
+        """Muestra las carreras activas para inscripciones."""
+        try:
+            with db.engine.connect() as conn:
+                result = conn.execute(text("""
+                    SELECT idCarrera, nombreCarrera
+                    FROM Carreras
+                    WHERE estado = 'Activa'
+                    ORDER BY nombreCarrera
+                """))
+
+                carreras = result.fetchall()
+                if not carreras:
+                    print("No hay carreras activas disponibles para inscripciones.")
+                    return []
+
+                print("\nCarreras disponibles para inscripciones:")
+                for carrera in carreras:
+                    print(f"ID: {carrera.idCarrera} | Nombre: {carrera.nombreCarrera}")
+                
+                return carreras
+        except Exception as e:
+            print(f"Error al consultar carreras para inscripciones: {str(e)}")
+            return []
