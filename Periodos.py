@@ -1,107 +1,128 @@
-
-from DataBase import db
 from sqlalchemy import text
+from datetime import date
+from dataclasses import dataclass
+from DataBase import db
 
-class Periodos:
+
+# ---Domain--- #
+
+@dataclass
+class Periodo:
+    nombre: str
+    fecha_inicio: date
+    fecha_fin: date
+    estado: str = "Planeado"
+
+# ---Repository--- #
+class PeriodoRepository:
+
+    def crear_tabla(self):
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='Periodos')
+                CREATE TABLE Periodos (
+                    idPeriodo INT IDENTITY(1,1) PRIMARY KEY,
+                    nombrePeriodo VARCHAR(100) NOT NULL UNIQUE,
+                    fechaInicio DATE NOT NULL,
+                    fechaFin DATE NOT NULL,
+                    estado VARCHAR(20) NOT NULL DEFAULT 'Planeado'
+                        CHECK (estado IN ('Activo','Cerrado','Planeado')),
+                    fechaCreacion DATETIME NOT NULL DEFAULT GETDATE(),
+                    fechaActualizacion DATETIME NOT NULL DEFAULT GETDATE(),
+                    CONSTRAINT CHK_Fechas_Periodo CHECK (fechaFin > fechaInicio)
+                )
+            """))
+
+            conn.execute(text("""
+                IF NOT EXISTS (SELECT * FROM sys.triggers WHERE name='trg_Update_Periodos')
+                EXEC('
+                    CREATE TRIGGER trg_Update_Periodos
+                    ON Periodos
+                    AFTER UPDATE
+                    AS
+                    BEGIN
+                        UPDATE Periodos
+                        SET fechaActualizacion = GETDATE()
+                        WHERE idPeriodo IN (SELECT idPeriodo FROM inserted);
+                    END
+                ')
+            """))
+            conn.commit()
+
+    def insertar(self, periodo: Periodo):
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                INSERT INTO Periodos (nombrePeriodo, fechaInicio, fechaFin, estado)
+                VALUES (:nombre, :inicio, :fin, :estado)
+            """), {
+                "nombre": periodo.nombre,
+                "inicio": periodo.fecha_inicio,
+                "fin": periodo.fecha_fin,
+                "estado": periodo.estado
+            })
+            conn.commit()
+
+    def cerrar(self, id_periodo: int):
+        with db.engine.connect() as conn:
+            conn.execute(text("""
+                UPDATE Periodos
+                SET estado = 'Cerrado'
+                WHERE idPeriodo = :id
+            """), {"id": id_periodo})
+            conn.commit()
+
+    def obtener_activos(self):
+        with db.engine.connect() as conn:
+            return conn.execute(text("""
+                SELECT idPeriodo, nombrePeriodo, fechaInicio, fechaFin, estado
+                FROM Periodos
+                WHERE estado = 'Activo'
+            """)).fetchall()
+
+
+# ---Service--- #
+class PeriodoService:
+
+    def __init__(self, repository: PeriodoRepository):
+        self.repository = repository
+
+    def inicializar(self):
+        self.repository.crear_tabla()
+
+    def crear_periodo(self, nombre, inicio, fin, estado="Planeado"):
+        if fin <= inicio:
+            raise ValueError("❌ La fecha de fin debe ser mayor que la fecha de inicio")
+
+        periodo = Periodo(
+            nombre=nombre,
+            fecha_inicio=inicio,
+            fecha_fin=fin,
+            estado=estado
+        )
+
+        self.repository.insertar(periodo)
+
+    def cerrar_periodo(self, id_periodo: int):
+        self.repository.cerrar(id_periodo)
+
+    def listar_periodos_activos(self):
+        return self.repository.obtener_activos()
+
+# ---Facade--- #
+class PeriodosFacade:
+
     def __init__(self):
-        pass
+        self._repository = PeriodoRepository()
+        self._service = PeriodoService(self._repository)
 
-    def crear_tabla_periodos(self):
-        """Crea la tabla 'Periodos' en la base de datos si no existe"""
+    def crear_tabla(self):
+        self._service.inicializar()
 
-        try:
-            with db.engine.connect() as conn:
-                # Verificar si la tabla ya existe
-                tabla_existe = conn.execute(text("""
-                    SELECT COUNT(*) FROM information_schema.tables 
-                    WHERE table_name = 'Periodos'
-                """)).scalar()
-                
-                if not tabla_existe:
-                    conn.execute(text("""
-                        CREATE TABLE Periodos (
-                            idPeriodo INT IDENTITY(1,1) PRIMARY KEY,
-                            nombrePeriodo VARCHAR(100) NOT NULL UNIQUE,
-                            fechaInicio DATE NOT NULL,
-                            fechaFin DATE NOT NULL,
-                            estado VARCHAR(20) NOT NULL DEFAULT 'Planeado'
-                                CHECK (estado IN ('Activo','Cerrado','Planeado')),
-                            fechaCreacion DATETIME NOT NULL DEFAULT GETDATE(),
-                            fechaActualizacion DATETIME NOT NULL DEFAULT GETDATE(),
-                            CONSTRAINT CHK_Fechas_Periodo CHECK (fechaFin > fechaInicio)
-                        )
-                    """))
+    def crear_periodo(self, nombre, inicio, fin, estado="Planeado"):
+        self._service.crear_periodo(nombre, inicio, fin, estado)
 
-                    # Trigger para auditoría de actualización
-                    conn.execute(text("""
-                        CREATE TRIGGER trg_Update_Periodos
-                        ON Periodos
-                        AFTER UPDATE
-                        AS
-                        BEGIN
-                            UPDATE Periodos
-                            SET fechaActualizacion = GETDATE()
-                            WHERE idPeriodo IN (SELECT idPeriodo FROM inserted);
-                        END;
-                    """))
+    def cerrar_periodo(self, id_periodo):
+        self._service.cerrar_periodo(id_periodo)
 
-                    print("✅ Tabla 'Periodos' creada exitosamente.")
-                else:
-                    print("ℹ️ La tabla 'Periodos' ya existe.")
-                
-                conn.commit()
-
-        except Exception as e:
-            print(f"❌ ERROR al crear la tabla 'Periodos': {str(e)}")
-
-    def insertar_periodo(self, nombre, inicio, fin, estado):
-
-        """Inserta un nuevo período en la tabla 'Periodos'"""
-        try:
-            with db.engine.connect() as conn:
-                conn.execute(text("""
-                    INSERT INTO Periodos (nombrePeriodo, fechaInicio, fechaFin, estado)
-                    VALUES (:nombre, :inicio, :fin, :estado)
-                """), {
-                    'nombre': nombre,
-                    'inicio': inicio,
-                    'fin': fin,
-                    'estado': estado
-                })
-                conn.commit()
-                print(f"✅ Período '{nombre}' insertado exitosamente.")
-        except Exception as e:
-            print(f"❌ ERROR al insertar el período '{nombre}': {str(e)}")
-    
-    def ver_periodos(self):
-        """Muestra los períodos activos"""
-        try:
-            with db.engine.connect() as conn:
-                result = conn.execute(text("""
-                    SELECT idPeriodo, nombrePeriodo, fechaInicio, fechaFin, estado
-                    FROM Periodos
-                    WHERE estado = 'Activo'
-                """))
-                
-                periodos = result.fetchall()
-                
-                for periodo in periodos:
-                    print(f"ID: {periodo.idPeriodo}, Nombre: {periodo.nombrePeriodo}, "
-                        f"Inicio: {periodo.fechaInicio}, Fin: {periodo.fechaFin}, "
-                        f"Estado: {periodo.estado}")  
-        except Exception as e:
-            print(f"❌ ERROR al obtener los períodos: {str(e)}")    
-
-    def desactivar_periodo(self, id_periodo):
-        """Desactiva un período cambiando su estado a 'Cerrado'"""
-        try:
-            with db.engine.connect() as conn:
-                conn.execute(text("""
-                    UPDATE Periodos
-                    SET estado = 'Cerrado'
-                    WHERE idPeriodo = :id_periodo
-                """), {'id_periodo': id_periodo})
-                conn.commit()
-                print(f"✅ Período con ID '{id_periodo}' desactivado exitosamente.")
-        except Exception as e:
-            print(f"❌ ERROR al desactivar el período con ID '{id_periodo}': {str(e)}")
+    def ver_periodos_activos(self):
+        return self._service.listar_periodos_activos()

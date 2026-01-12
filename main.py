@@ -1,11 +1,11 @@
-
 from DataBase import db
 from sqlalchemy import text
-from Periodos import Periodos
+from Periodos import PeriodosFacade
 from Carreras import Carreras
 from Estudiante import Aspirante
 from Inscripciones import Inscripciones
-import datetime
+from OfertasAcademicas import OfertasFacade
+from datetime import date, datetime
 
 sistema_inscripciones = None
 
@@ -217,7 +217,8 @@ def acceso_estudiante():
         print("\n📋 ¿Qué desea hacer?")
         print("1. Inscribirme en una carrera (Nuevo estudiante)")
         print("2. Ver mis inscripciones (Estudiante registrado)")
-        print("3. Salir")
+        print("3. Ver ofertas academicas")
+        print("4. Salir")
         
         opcion = input("\nSeleccione una opción: ").strip()
         
@@ -228,6 +229,8 @@ def acceso_estudiante():
             # Verificar inscripciones existentes usando el nuevo sistema
             sistema_inscripciones.ver_inscripciones_estudiante(numero_identificacion)
         elif opcion == "3":
+            ver_ofertas_estudiante()
+        elif opcion == "4":
             print("¡Hasta luego! 👋")
         else:
             print("❌ Opción inválida")
@@ -540,6 +543,7 @@ def registrar_estudiante_desde_aspirante(registro_aspirante):
         except ValueError:
             print("❌ Por favor ingrese un número válido")
             continue
+    
 
 def menu_principal():
     """Menú principal del sistema - VERSIÓN ACTUALIZADA"""
@@ -618,8 +622,9 @@ def ver_estructura():
 
 def menu_periodos():
     """Menú para gestionar períodos académicos"""
-    periodos = Periodos()
     
+    periodos = PeriodosFacade()
+
     while True:
         print("\n" + "=" * 50)
         print("MENÚ DE PERÍODOS ACADÉMICOS")
@@ -629,24 +634,236 @@ def menu_periodos():
         print("3. Ver períodos activos")
         print("4. Desactivar período")
         print("5. Volver al menú principal")
-        
-        opcion = input("\nSeleccione una opción: ")
-        
+
+        opcion = input("\nSeleccione una opción: ").strip()
+        # --- Crear tabla ---#
         if opcion == "1":
-            periodos.crear_tabla_periodos()
-        if opcion == "2":
-            nombre = input("Nombre del período: ")
-            inicio = input("Fecha de inicio (YYYY-MM-DD): ")
-            fin = input("Fecha de fin (YYYY-MM-DD): ")
-            estado = input("Estado (Activo/Cerrado/Planeado): ")
-            periodos.insertar_periodo(nombre, inicio, fin, estado)
-        if opcion == "3":
-            periodos.ver_periodos()
-        if opcion == "4":
-            id_periodo = input("ID del período a desactivar: ")
-            periodos.desactivar_periodo(id_periodo)
-        if opcion == "5":
+            periodos.crear_tabla()
+            print("✅ Tabla de períodos creada o ya existente.")
+
+        # --- Insertar periodo ---#
+
+        elif opcion == "2":
+            try:
+                nombre = input("Nombre del período: ")
+
+                inicio = date.fromisoformat(
+                    input("Fecha de inicio (YYYY-MM-DD): ")
+                )
+                fin = date.fromisoformat(
+                    input("Fecha de fin (YYYY-MM-DD): ")
+                )
+
+                estado = input(
+                    "Estado (Activo/Cerrado/Planeado): "
+                ).capitalize()
+
+                periodos.crear_periodo(nombre, inicio, fin, estado)
+                print(f"✅ Período '{nombre}' creado correctamente.")
+
+            except ValueError as e:
+                print(f"❌ Error: {e}")
+
+        # ---Ver periodos activos ---#
+
+        elif opcion == "3":
+            activos = periodos.ver_periodos_activos()
+
+            if not activos:
+                print("ℹ️ No existen períodos activos.")
+            else:
+                print("\nPERÍODOS ACTIVOS:")
+                for p in activos:
+                    print(
+                        f"ID: {p.idPeriodo} | "
+                        f"{p.nombrePeriodo} | "
+                        f"{p.fechaInicio} → {p.fechaFin} | "
+                        f"Estado: {p.estado}"
+                    )
+
+        # --- Desactivar periodos ---#
+
+        elif opcion == "4":
+            try:
+                id_periodo = int(
+                    input("ID del período a desactivar: ")
+                )
+                periodos.cerrar_periodo(id_periodo)
+                print("✅ Período desactivado correctamente.")
+            except ValueError:
+                print("❌ El ID debe ser un número válido.")
+
+        # --- Salir ---#
+
+        elif opcion == "5":
+            print("↩️ Volviendo al menú principal...")
             break
+
+        else:
+            print("❌ Opción no válida. Intente nuevamente.")
+
+def menu_ofertas():
+    """Menú para gestionar Ofertas Académicas"""
+
+    ofertas = OfertasFacade()
+    periodos = PeriodosFacade()
+    carreras = Carreras()
+
+    while True:
+        print("\n" + "=" * 60)
+        print("MENÚ DE OFERTAS ACADÉMICAS")
+        print("=" * 60)
+        print("1. Crear tablas de ofertas")
+        print("2. Crear nueva oferta académica")
+        print("3. Ver ofertas académicas")
+        print("4. Eliminar oferta académica")
+        print("5. Volver al menú principal")
+
+        opcion = input("\nSeleccione una opción: ").strip()
+
+        # ---crear tablas ---#
+        if opcion == "1":
+            ofertas.crear_tablas()
+            print("✅ Tablas de ofertas creadas o ya existentes.")
+
+        # ---crear ofertas ---#
+
+        elif opcion == "2":
+
+            # ---- Mostrar períodos activos ----
+            periodos_activos = periodos.ver_periodos_activos()
+
+            if not periodos_activos:
+                print("❌ No existen períodos activos.")
+                continue
+
+            print("\nPERÍODOS ACTIVOS:")
+            for p in periodos_activos:
+                print(f"ID: {p.idPeriodo} | {p.nombrePeriodo}")
+
+            try:
+                id_periodo = int(input("\nSeleccione el ID del período: "))
+            except ValueError:
+                print("❌ ID inválido")
+                continue
+
+            nombre_oferta = input("Nombre de la oferta académica: ").strip()
+            if not nombre_oferta:
+                print("❌ El nombre es obligatorio")
+                continue
+
+            # ---- Carreras ----
+            carreras_disponibles = carreras.ver_carreras_para_inscripcion()
+
+            if not carreras_disponibles:
+                print("❌ No hay carreras activas.")
+                continue
+
+            detalles = []
+
+            while True:
+                try:
+                    id_carrera = int(
+                        input("\nID de la carrera a agregar (0 para terminar): ")
+                    )
+                except ValueError:
+                    print("❌ ID inválido")
+                    continue
+
+                if id_carrera == 0:
+                    break
+
+                jornada = input("Jornada (Diurna/Nocturna): ")
+                modalidad = input("Modalidad (Presencial/Virtual): ")
+                tipo_cupo = input("Tipo de cupo (Regular/Especial): ")
+
+                try:
+                    total_cupos = int(input("Total de cupos: "))
+                except ValueError:
+                    print("❌ Número inválido")
+                    continue
+
+                detalles.append({
+                    "idCarrera": id_carrera,
+                    "jornada": jornada,
+                    "modalidad": modalidad,
+                    "tipoCupo": tipo_cupo,
+                    "totalCupos": total_cupos
+                })
+
+            if not detalles:
+                print("❌ Debe agregar al menos una carrera.")
+                continue
+
+            try:
+                id_oferta = ofertas.crear_oferta(
+                    nombre=nombre_oferta,
+                    id_periodo=id_periodo,
+                    detalles=detalles
+                )
+                print(f"✅ Oferta creada correctamente (ID: {id_oferta})")
+            except Exception as e:
+                print(f"❌ Error: {e}")
+
+        # ---ver ofertas ---#
+
+        elif opcion == "3":
+
+            print("\n¿Desea filtrar por período?")
+            print("1. Sí")
+            print("2. No")
+
+            filtro = input("Seleccione una opción: ")
+
+            id_periodo = None
+            if filtro == "1":
+                try:
+                    id_periodo = int(input("ID del período: "))
+                except ValueError:
+                    print("❌ ID inválido")
+                    continue
+
+            ofertas_list = ofertas.listar_ofertas(id_periodo)
+
+            if not ofertas_list:
+                print("📭 No existen ofertas registradas.")
+                continue
+
+            oferta_actual = None
+            for o in ofertas_list:
+                if oferta_actual != o.idOferta:
+                    oferta_actual = o.idOferta
+                    print("\n🎯 OFERTA:", o.nombreOferta)
+                    print(f"Período: {o.nombrePeriodo} | Estado: {o.estado}")
+                    print("Carreras:")
+
+                if o.nombreCarrera:
+                    print(
+                        f"  - {o.nombreCarrera} | "
+                        f"Jornada: {o.jornada} | "
+                        f"Modalidad: {o.modalidad} | "
+                        f"Cupo: {o.tipoCupo} | "
+                        f"Total: {o.totalCupos}"
+                    )
+
+        # ---Eliminar oferta  ---#
+
+        elif opcion == "4":
+            try:
+                id_oferta = int(input("ID de la oferta a eliminar: "))
+                ofertas.eliminar_oferta(id_oferta)
+                print("🗑️ Oferta eliminada correctamente.")
+            except ValueError:
+                print("❌ ID inválido")
+
+        # ---Salir ---#
+
+        elif opcion == "5":
+            print("↩️ Volviendo al menú principal...")
+            break
+
+        else:
+            print("❌ Opción no válida")
 
 def menu_carreras():
     """Menú para gestionar carreras académicas"""
@@ -826,5 +1043,33 @@ def actualizar_estado_inscripcion_interactivo():
     except Exception as e:
         print(f"❌ Error: {e}")
 
+def ver_ofertas_estudiante():
+    """Permite al estudiante ver todas las ofertas académicas disponibles"""
+    ofertas_facade = OfertasFacade()
+    
+    print("\n🎯 OFERTAS ACADÉMICAS DISPONIBLES")
+    print("=" * 50)
+
+    ofertas_list = ofertas_facade.listar_ofertas()  # Obtener todas las ofertas
+    
+    if not ofertas_list:
+        print("ℹ️ No existen ofertas registradas.")
+        return
+    
+    oferta_actual = None
+    for o in ofertas_list:
+        if oferta_actual != o.idOferta:
+            oferta_actual = o.idOferta
+            print("\n-----------------------------------")
+            print(f"Oferta: {o.nombreOferta} | Período: {o.nombrePeriodo} | Estado: {o.estado}")
+            print("Carreras disponibles:")
+        if o.nombreCarrera:
+            print(
+                f"  - {o.nombreCarrera} | Jornada: {o.jornada} | "
+                f"Modalidad: {o.modalidad} | Tipo de cupo: {o.tipoCupo} | Total: {o.totalCupos}"
+            )
+
+
 if __name__ == "__main__":
     main()
+    
