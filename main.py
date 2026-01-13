@@ -5,7 +5,11 @@ from Carreras import Carreras
 from Estudiante import Aspirante
 from Inscripciones import Inscripciones
 from OfertasAcademicas import OfertasFacade
+from postulaciones import PostulacionesFacade
+from evaluaciones import EvaluacionFacade
 from datetime import date, datetime
+
+
 
 sistema_inscripciones = None
 
@@ -31,9 +35,21 @@ def main():
     global sistema_inscripciones
     sistema_inscripciones = Inscripciones()
     sistema_inscripciones.crear_tablas_compatibles()
+
+    print("🚀 Inicializando Módulo de Admisiones SIPU...")
+    global sipu_postulaciones, sipu_evaluaciones
+    sipu_postulaciones = PostulacionesFacade()
+    sipu_evaluaciones = EvaluacionFacade()
+
+    sipu_postulaciones.inicializar()
+    sipu_evaluaciones.inicializar()
     
     # Paso 3: Mostrar menú principal
     menu_acceso()
+
+    # Instancias Globales
+sipu_postulaciones = PostulacionesFacade()
+sipu_evaluaciones = EvaluacionFacade()
 
 def reparar_estructuras_tablas():
     """Repara todas las tablas agregando columnas faltantes"""
@@ -554,20 +570,20 @@ def menu_principal():
         print("1. Ver tablas existentes")
         print("2. Gestionar períodos académicos")
         print("3. Gestionar carreras")
-        print("4. GESTIÓN DE INSCRIPCIONES")  # ← NUEVA OPCIÓN DESTACADA
-        print("5. Salir")
+        print("4. GESTIÓN DE INSCRIPCIONES")
+        print("5. ADMISIONES SIPU (Postulación y Evaluación)")
+        print("6. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
         if opcion == "1":
             ver_tablas()
-        elif opcion == "2":
-            menu_periodos()
-        elif opcion == "3":
-            menu_carreras()
+        # ... (opciones 2, 3 y 4 igual)
         elif opcion == "4":
-            menu_gestion_inscripciones_admin()  # ← NUEVA FUNCIÓN
+            menu_gestion_inscripciones_admin()
         elif opcion == "5":
+            menu_admisiones_sipu() 
+        elif opcion == "6":
             print("¡Hasta pronto! 👋")
             break
         else:
@@ -1068,6 +1084,67 @@ def ver_ofertas_estudiante():
                 f"  - {o.nombreCarrera} | Jornada: {o.jornada} | "
                 f"Modalidad: {o.modalidad} | Tipo de cupo: {o.tipoCupo} | Total: {o.totalCupos}"
             )
+def menu_admisiones_sipu():
+    """Menú exclusivo para tu parte del proyecto"""
+    while True:
+        print("\n" + "=" * 60)
+        print("🏛️  MÓDULO DE ADMISIONES SIPU (TÚ PARTE)")
+        print("=" * 60)
+        print("1. [Postulación] Nueva solicitud (Aspirante)")
+        print("2. [Secretaría] Ver Postulaciones en Revisión")
+        print("3. [Consejo] Evaluar y Asignar Cupos (Observer)")
+        print("4. Volver al menú principal")
+
+        op = input("\nSeleccione: ")
+
+        if op == "1":
+            # Lógica de Postulación
+            print("\n📝 NUEVA POSTULACIÓN")
+            cedula = input("Cédula del Aspirante: ")
+            
+            # Mostrar carreras rápido para que elija
+            Carreras().ver_carreras_para_inscripcion()
+            
+            try:
+                id_carrera = int(input("ID Carrera: "))
+                promedio = float(input("Promedio de Colegio (1-10): "))
+                
+                # Simulamos checkboxes de documentos
+                docs = []
+                print("¿Documentos físicos entregados?")
+                if input("- Copia de Cédula (s/n): ") == 's': docs.append('Cedula')
+                if input("- Título Bachiller (s/n): ") == 's': docs.append('Titulo Bachiller')
+                if input("- Foto (s/n): ") == 's': docs.append('Foto')
+                
+                sipu_postulaciones.nueva_postulacion(cedula, id_carrera, promedio, docs)
+            except ValueError:
+                print("❌ Error: Ingrese números válidos.")
+
+        elif op == "2":
+            # Ver pendientes
+            pendientes = sipu_postulaciones.ver_pendientes()
+            if not pendientes:
+                print("\n✅ No hay trámites pendientes.")
+            else:
+                print(f"\n{'ID':<5} {'ASPIRANTE':<30} {'CARRERA':<20}")
+                print("-" * 60)
+                for p in pendientes:
+                    print(f"{p.idPostulacion:<5} {p.aspirante:<30} {p.nombreCarrera:<20}")
+
+        elif op == "3":
+            # Evaluación con Observer
+            try:
+                id_post = int(input("\nID Postulación a evaluar: "))
+                examen = float(input("Nota Examen Admisión (0-100): "))
+                obs = input("Observación: ")
+                
+                # Aquí se detona tu patrón Observer (Asignar horario, cambiar estado)
+                sipu_evaluaciones.evaluar_aspirante(id_post, examen, obs)
+            except ValueError:
+                print("❌ Error en los datos.")
+        
+        elif op == "4":
+            break
 
 
 if __name__ == "__main__":

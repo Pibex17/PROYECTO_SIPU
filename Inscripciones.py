@@ -1,4 +1,3 @@
-# Inscripciones.py
 from DataBase import db
 from sqlalchemy import text
 import datetime
@@ -17,7 +16,7 @@ class Inscripciones:
                 print("\n CREANDO SISTEMA DE INSCRIPCIONES")
                 print("=" * 50)
                 
-                # 1. Crear tabla OfertasAcademicas (si no existe)
+                # 1. Crear tabla OfertasAcademicas
                 conn.execute(text("""
                     IF NOT EXISTS (SELECT * FROM information_schema.tables WHERE table_name = 'OfertasAcademicas')
                     CREATE TABLE OfertasAcademicas (
@@ -33,10 +32,9 @@ class Inscripciones:
                         fechaCreacion DATETIME DEFAULT GETDATE()
                     )
                 """))
-                print("✅ Tabla 'OfertasAcademicas' creada/verificada")
+                print(" Tabla 'OfertasAcademicas' creada/verificada")
                 
                 # 2. Asegurar que la tabla Estudiantes existe con estructura simple
-                # (Tu tabla ya existe, solo verificamos)
                 conn.execute(text("""
                     IF NOT EXISTS (SELECT * FROM information_schema.tables WHERE table_name = 'Estudiantes')
                     CREATE TABLE Estudiantes (
@@ -50,25 +48,25 @@ class Inscripciones:
                         fechaRegistro DATETIME DEFAULT GETDATE()
                     )
                 """))
-                print("✅ Tabla 'Estudiantes' verificada")
+                print(" Tabla 'Estudiantes' verificada")
                 
-                # 3. Agregar campos adicionales si no existen (para compatibilidad futura)
+                # 3. Agregar campos adicionales si no existen
                 try:
                     conn.execute(text("""
                         IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
                                     WHERE TABLE_NAME = 'Estudiantes' AND COLUMN_NAME = 'email')
                         ALTER TABLE Estudiantes ADD email VARCHAR(100) NULL;
                     """))
-                    print("✅ Campo 'email' agregado (si no existía)")
+                    print(" Campo 'email' agregado (si no existía)")
                     
                     conn.execute(text("""
                         IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
                                     WHERE TABLE_NAME = 'Estudiantes' AND COLUMN_NAME = 'telefono')
                         ALTER TABLE Estudiantes ADD telefono VARCHAR(20) NULL;
                     """))
-                    print("✅ Campo 'telefono' agregado (si no existía)")
+                    print(" Campo 'telefono' agregado (si no existía)")
                 except:
-                    pass  # Los campos ya existen
+                    pass 
                 
                 # 4. Crear tabla Inscripciones
                 conn.execute(text("""
@@ -84,14 +82,14 @@ class Inscripciones:
                         fechaActualizacion DATETIME NOT NULL DEFAULT GETDATE()
                     )
                 """))
-                print("✅ Tabla 'Inscripciones' creada")
+                print(" Tabla 'Inscripciones' creada")
                 
                 conn.commit()
-                print("\n🎉 SISTEMA DE INSCRIPCIONES LISTO PARA USAR")
+                print("\n SISTEMA DE INSCRIPCIONES LISTO PARA USAR")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error al crear tablas compatibles: {str(e)}")
+            print(f" Error al crear tablas compatibles: {str(e)}")
             return False
 
     def registrar_estudiante_compatible(self, registro_aspirante, id_carrera, email="", telefono=""):
@@ -106,7 +104,7 @@ class Inscripciones:
                 """), {'cedula': registro_aspirante.identificacion})
                 
                 if result.fetchone():
-                    print("⚠️  El estudiante ya está registrado")
+                    print("  El estudiante ya está registrado")
                     return False
                 
                 # Insertar usando estructura compatible
@@ -123,14 +121,14 @@ class Inscripciones:
                 })
                 conn.commit()
                 
-                print(f"✅ Estudiante registrado exitosamente:")
+                print(f" Estudiante registrado exitosamente:")
                 print(f"   • Cédula: {registro_aspirante.identificacion}")
                 print(f"   • Nombres: {registro_aspirante.nombres} {registro_aspirante.apellidos}")
                 print(f"   • Carrera ID: {id_carrera}")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error al registrar estudiante: {str(e)}")
+            print(f" Error al registrar estudiante: {str(e)}")
             return False
 
     def crear_inscripcion_automatica(self, cedula_estudiante, id_carrera):
@@ -147,7 +145,7 @@ class Inscripciones:
                 """), {'cedula': cedula_estudiante}).fetchone()
                 
                 if not estudiante:
-                    print("❌ Estudiante no encontrado")
+                    print(" Estudiante no encontrado")
                     return False
                 
                 # 2. Buscar o crear una oferta académica para la carrera
@@ -160,7 +158,7 @@ class Inscripciones:
                 
                 # Si no existe, crear una automáticamente
                 if not oferta:
-                    print("📝 Creando oferta académica automáticamente...")
+                    print(" Creando oferta académica automáticamente...")
                     
                     # Obtener período activo o crear uno
                     periodo = conn.execute(text("""
@@ -199,13 +197,13 @@ class Inscripciones:
                 })
                 conn.commit()
                 
-                print(f"✅ Inscripción creada exitosamente para:")
+                print(f" Inscripción creada exitosamente para:")
                 print(f"   • Estudiante: {estudiante.nombres} {estudiante.apellidos}")
                 print(f"   • Estado: Pendiente de revisión")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error al crear inscripción: {str(e)}")
+            print(f" Error al crear inscripción: {str(e)}")
             return False
 
     def ver_inscripciones_estudiante(self, cedula_estudiante):
@@ -233,23 +231,23 @@ class Inscripciones:
                 inscripciones = result.fetchall()
                 
                 if not inscripciones:
-                    print("📭 No tienes inscripciones registradas")
+                    print(" No tienes inscripciones registradas")
                     return
                 
-                print(f"\n📋 TUS INSCRIPCIONES:")
+                print(f"\n TUS INSCRIPCIONES:")
                 print("=" * 70)
                 for insc in inscripciones:
-                    print(f"\n🆔 ID: {insc.idInscripcion}")
-                    print(f"📅 Fecha: {insc.fechaInscripcion.strftime('%Y-%m-%d')}")
-                    print(f"🎓 Carrera: {insc.nombreCarrera}")
-                    print(f"📚 Oferta: {insc.nombreOferta or 'Generada automáticamente'}")
-                    print(f"📊 Estado: {insc.estado}")
+                    print(f"\n ID: {insc.idInscripcion}")
+                    print(f" Fecha: {insc.fechaInscripcion.strftime('%Y-%m-%d')}")
+                    print(f" Carrera: {insc.nombreCarrera}")
+                    print(f" Oferta: {insc.nombreOferta or 'Generada automáticamente'}")
+                    print(f" Estado: {insc.estado}")
                     if insc.observaciones:
-                        print(f"📝 Observaciones: {insc.observaciones}")
+                        print(f" Observaciones: {insc.observaciones}")
                 print("=" * 70)
                 
         except Exception as e:
-            print(f"❌ Error al consultar inscripciones: {str(e)}")
+            print(f" Error al consultar inscripciones: {str(e)}")
 
     def ver_todas_inscripciones(self):
         """
@@ -275,10 +273,10 @@ class Inscripciones:
                 inscripciones = result.fetchall()
                 
                 if not inscripciones:
-                    print("📭 No hay inscripciones en el sistema")
+                    print(" No hay inscripciones en el sistema")
                     return
                 
-                print(f"\n📋 TODAS LAS INSCRIPCIONES:")
+                print(f"\n TODAS LAS INSCRIPCIONES:")
                 print("=" * 90)
                 print(f"{'ID':<5} {'ESTUDIANTE':<25} {'CÉDULA':<12} {'CARRERA':<20} {'ESTADO':<12} {'FECHA':<12}")
                 print("=" * 90)
@@ -288,7 +286,7 @@ class Inscripciones:
                 print("=" * 90)
                 
         except Exception as e:
-            print(f"❌ Error al consultar inscripciones: {str(e)}")
+            print(f" Error al consultar inscripciones: {str(e)}")
 
     def actualizar_estado_inscripcion(self, id_inscripcion, nuevo_estado, observaciones=None):
 
@@ -310,11 +308,11 @@ class Inscripciones:
                 })
                 conn.commit()
                 
-                print(f"✅ Inscripción ID {id_inscripcion} actualizada a estado: {nuevo_estado}")
+                print(f" Inscripción ID {id_inscripcion} actualizada a estado: {nuevo_estado}")
                 return True
                 
         except Exception as e:
-            print(f"❌ Error al actualizar inscripción: {str(e)}")
+            print(f" Error al actualizar inscripción: {str(e)}")
             return False
 
     def ver_todas_inscripciones_detalladas(self):
@@ -351,7 +349,7 @@ class Inscripciones:
                     print("\n📭 No hay inscripciones registradas en el sistema")
                     return []
                 
-                print(f"\n📋 TODAS LAS INSCRIPCIONES - VISTA DE ADMINISTRADOR")
+                print(f"\n TODAS LAS INSCRIPCIONES - VISTA DE ADMINISTRADOR")
                 print("=" * 120)
                 print(f"{'ID':<4} {'FECHA':<12} {'ESTADO':<12} {'ESTUDIANTE':<25} {'CÉDULA':<12} {'CARRERA':<20}")
                 print("=" * 120)
@@ -371,7 +369,7 @@ class Inscripciones:
                 return inscripciones
                 
         except Exception as e:
-            print(f"❌ Error al consultar inscripciones: {str(e)}")
+            print(f" Error al consultar inscripciones: {str(e)}")
             return []
 
     def ver_detalle_inscripcion(self, id_inscripcion):
@@ -410,19 +408,19 @@ class Inscripciones:
                 inscripcion = result.fetchone()
                 
                 if not inscripcion:
-                    print(f"❌ No se encontró inscripción con ID {id_inscripcion}")
+                    print(f" No se encontró inscripción con ID {id_inscripcion}")
                     return None
                 
                 # Mostrar resultados
-                print(f"\n📄 DETALLE COMPLETO DE INSCRIPCIÓN #{inscripcion.idInscripcion}")
+                print(f"\n DETALLE COMPLETO DE INSCRIPCIÓN #{inscripcion.idInscripcion}")
                 print("=" * 60)
-                print(f"📅 Fecha de inscripción: {inscripcion.fechaInscripcion.strftime('%Y-%m-%d %H:%M')}")
-                print(f"📊 Estado actual: {inscripcion.estado}")
+                print(f" Fecha de inscripción: {inscripcion.fechaInscripcion.strftime('%Y-%m-%d %H:%M')}")
+                print(f" Estado actual: {inscripcion.estado}")
                 
                 if inscripcion.fechaActualizacion:
-                    print(f"🔄 Última actualización: {inscripcion.fechaActualizacion.strftime('%Y-%m-%d %H:%M')}")
+                    print(f" Última actualización: {inscripcion.fechaActualizacion.strftime('%Y-%m-%d %H:%M')}")
                 
-                print(f"\n👤 INFORMACIÓN DEL ESTUDIANTE:")
+                print(f"\n INFORMACIÓN DEL ESTUDIANTE:")
                 print(f"   • Nombre completo: {inscripcion.nombres} {inscripcion.apellidos}")
                 print(f"   • Cédula: {inscripcion.cedula}")
                 
@@ -449,7 +447,7 @@ class Inscripciones:
                     print(f"   • Duración: {inscripcion.duracionSemestres} semestres")
                 
                 if inscripcion.nombreOferta:
-                    print(f"\n📚 INFORMACIÓN DE LA OFERTA ACADÉMICA:")
+                    print(f"\n INFORMACIÓN DE LA OFERTA ACADÉMICA:")
                     print(f"   • Oferta: {inscripcion.nombreOferta}")
                     
                     if inscripcion.descripcion_oferta:
@@ -462,7 +460,7 @@ class Inscripciones:
                         print(f"   • Fecha fin: {inscripcion.fechaFin}")
                 
                 if inscripcion.observaciones:
-                    print(f"\n📝 OBSERVACIONES:")
+                    print(f"\n OBSERVACIONES:")
                     print(f"   {inscripcion.observaciones}")
                 
                 print("=" * 60)
@@ -499,7 +497,7 @@ class Inscripciones:
                     print(f"\n📭 No hay inscripciones con estado '{estado}'")
                     return []
                 
-                print(f"\n📋 INSCRIPCIONES CON ESTADO '{estado.upper()}':")
+                print(f"\n INSCRIPCIONES CON ESTADO '{estado.upper()}':")
                 print("=" * 80)
                 print(f"{'ID':<4} {'FECHA':<12} {'ESTUDIANTE':<25} {'CÉDULA':<12} {'CARRERA':<20}")
                 print("=" * 80)
@@ -508,7 +506,7 @@ class Inscripciones:
                     fecha = insc.fechaInscripcion.strftime('%Y-%m-%d')
                     print(f"{insc.idInscripcion:<4} {fecha:<12} {insc.estudiante:<25} {insc.cedula:<12} {insc.nombreCarrera:<20}")
                 
-                print(f"\n📊 Total: {len(inscripciones)} inscripción(es)")
+                print(f"\n Total: {len(inscripciones)} inscripción(es)")
                 return inscripciones
                 
         except Exception as e:
