@@ -15,7 +15,7 @@ class DatabaseManager:
         print("=" * 50)
         
         # Usar el servidor que SÍ funciona
-        server = "PIBEX17PC\SQLEXPRESS"  # ← Este es el que funciona
+        server = "PIBEX17PC\SQLEXPRESS"  
         database = "RegistroNacional"
         username = "sa"
         password = getpass.getpass("Contraseña de SQL Server: ")

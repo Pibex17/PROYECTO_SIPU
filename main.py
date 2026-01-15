@@ -6,6 +6,8 @@ from Carreras import Carreras
 from Estudiante import Aspirante
 from Inscripciones import Inscripciones
 import datetime
+from Evaluacion import Evaluacion
+import evaluaciones_funciones as eval_funcs
 
 sistema_inscripciones = None
 
@@ -164,6 +166,9 @@ def reparar_estructuras_tablas():
             except Exception as e:
                 print(f"  ❌ Error al crear OfertasAcademicas: {e}")
             
+            # 5. Crear tablas de evaluaciones
+            Evaluacion.crear_tabla_evaluaciones()
+
             conn.commit()
             print("\n🎉 ¡TODAS LAS TABLAS REPARADAS EXITOSAMENTE!")
             return True
@@ -217,7 +222,8 @@ def acceso_estudiante():
         print("\n📋 ¿Qué desea hacer?")
         print("1. Inscribirme en una carrera (Nuevo estudiante)")
         print("2. Ver mis inscripciones (Estudiante registrado)")
-        print("3. Salir")
+        print("3. Ver mis evaluaciones")
+        print("4. Salir")
         
         opcion = input("\nSeleccione una opción: ").strip()
         
@@ -228,6 +234,9 @@ def acceso_estudiante():
             # Verificar inscripciones existentes usando el nuevo sistema
             sistema_inscripciones.ver_inscripciones_estudiante(numero_identificacion)
         elif opcion == "3":
+            # Ver evaluaciones asignadas
+            Aspirante.ver_mis_evaluaciones(numero_identificacion)
+        elif opcion == "4":
             print("¡Hasta luego! 👋")
         else:
             print("❌ Opción inválida")
@@ -388,8 +397,8 @@ def registrar_estudiante_nuevo_sistema(registro_aspirante):
         print("\n❌ ACCESO DENEGADO")
         print("   No se encontró en el Registro Nacional o su estado no es activo")
 
-def registrar_estudiante_desde_aspirante(registro_aspirante):
-    """Registra a un aspirante como estudiante"""
+def registrar_estudiante_desde_aspirante_antiguo(registro_aspirante):
+    """[DEPRECATED] Versión antigua - Registra a un aspirante como estudiante"""
     print("\n🎓 REGISTRO COMO ESTUDIANTE")
     print("-" * 40)
     
@@ -551,7 +560,8 @@ def menu_principal():
         print("2. Gestionar períodos académicos")
         print("3. Gestionar carreras")
         print("4. GESTIÓN DE INSCRIPCIONES")  # ← NUEVA OPCIÓN DESTACADA
-        print("5. Salir")
+        print("5. Gestionar evaluaciones")
+        print("6. Salir")
         
         opcion = input("\nSeleccione una opción: ")
         
@@ -564,6 +574,8 @@ def menu_principal():
         elif opcion == "4":
             menu_gestion_inscripciones_admin()  # ← NUEVA FUNCIÓN
         elif opcion == "5":
+            eval_funcs.menu_gestion_evaluaciones_admin()
+        elif opcion == "6":
             print("¡Hasta pronto! 👋")
             break
         else:
